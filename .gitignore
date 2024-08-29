@@ -1,0 +1,19 @@
+# Compiler files
+cache/
+out/
+lib/
+web3erc20.js
+web3erc20erc721.js
+web3erc721.js
+.vscode/
+
+# Ignores development broadcast logs
+!/broadcast
+/broadcast/*/31337/
+/broadcast/**/dry-run/
+
+# Docs
+docs/
+
+# Dotenv file
+.env
