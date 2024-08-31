@@ -26,7 +26,7 @@ to discuss what you would like to change.
 Please make sure to update tests as appropriate.
 
 ## v2 Ideas of my own
-###### If we are ERC721 owner and want ERC20 in exchange, prices of ERC20 tokens will change by time. It's not just for price being static in here. It should be able to update itself when it comes to swapping. So idea is getting price of erc20 token against a stable coin and deciding is ERC721 owner will get more or less token when it comes to swap. If price of erc20 token goes high ERC721 owner will get less token and if it goes lower ERC721 owner will get more token.
+If we are ERC721 owner and want ERC20 in exchange, prices of ERC20 tokens will change by time. It's not just for price being static in here. It should be able to update itself when it comes to swapping. So idea is getting price of erc20 token against a stable coin and deciding is ERC721 owner will get more or less token when it comes to swap. If price of erc20 token goes high ERC721 owner will get less token and if it goes lower ERC721 owner will get more token.
 
 ###### 
 
