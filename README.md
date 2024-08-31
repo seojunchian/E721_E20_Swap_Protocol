@@ -8,4 +8,13 @@
 
 ## Using Guides
 
-#### web3 library or abi.ninja (a buildguild project has fantastic ui)
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first
+to discuss what you would like to change.
+
+Please make sure to update tests as appropriate.
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)
