@@ -200,7 +200,7 @@ contract NTPair is INTPair, IERC721Receiver {
         require(
             ERC20Success &&
                 (ERC20Data.length == 0 || abi.decode(ERC20Data, (bool))),
-            "NT: ERC20 TRAN SFER FAILED"
+            "NT: ERC20 TRANSFER FAILED"
         );
     }
 
