@@ -25,6 +25,9 @@ to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.
 
+## v2 Ideas of my own
+
+
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
