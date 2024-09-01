@@ -121,7 +121,7 @@ contract NTPair is INTPair, IERC721Receiver {
         address _ERC721ContractAddress,
         uint256 _ERC721TokenId
     ) public {
-        /*             VARIBALES TO GO TO PAIR              */
+        /*             VARIABLES TO GO TO PAIR              */
         address _ERC20ContractAddress = ERC721ContractAddress_To_ERC721TokenId_To_ERC20ContractAddress[
                 _ERC721ContractAddress
             ][_ERC721TokenId];
@@ -209,7 +209,7 @@ contract NTPair is INTPair, IERC721Receiver {
         uint256 _ERC721TokenId,
         uint256 _newERC20TokenPrice
     ) public {
-        /*             VARIBALES TO GO TO PAIR              */
+        /*             VARIABLES TO GO TO PAIR              */
         address _ERC20ContractAddress = ERC721ContractAddress_To_ERC721TokenId_To_ERC20ContractAddress[
                 _ERC721ContractAddress
             ][_ERC721TokenId];
