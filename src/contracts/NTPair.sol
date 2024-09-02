@@ -59,9 +59,11 @@ contract NTPair is INTPair, IERC721Receiver {
         address pairAddress = ERC721ContractAddress_To_ERC721TokenId_To_ERC20ContractAddress_To_Pair[
                 _ERC721ContractAddress
             ][_ERC721TokenId][_ERC20ContractAddress];
-        /*                 STATE VARIABLES                  */
+        /*                    PAIR INFO                     */
         Pair memory pairInfo = PairAddress_To_PairInfo[pairAddress];
-        /*                 STATE VARIABLES                  */
+        /*                  PAIR REQUIREMENT                */
+        require(pairAddress != address(0), "Pair doesnt exist");
+        /*               OWNERSHIP REQUIREMENT              */
         require(
             pairInfo.ERC721TokenOwner == msg.sender,
             "Not the owner of ERC721 Token"
@@ -99,25 +101,25 @@ contract NTPair is INTPair, IERC721Receiver {
             ][_ERC721TokenId][_ERC20ContractAddress] == address(0),
             "Pair already exists"
         );
-        /*                 STATE VARIABLES                  */
+        /*             APPROVEMENT REQUIREMENT              */
         require(
             IERC721(_ERC721ContractAddress).getApproved(_ERC721TokenId) ==
                 address(this),
             "Token hasn't been approved"
         );
-        /*                 STATE VARIABLES                  */
+        /*                 PAIR CREATION                    */
         bytes32 salt = keccak256(
             abi.encodePacked(_ERC721ContractAddress, _ERC721TokenId)
         );
         address pair = address(uint160(uint256(salt)));
-        /*                 STATE VARIABLES                  */
+        /*                  STATE CHANGES                   */
         ERC721ContractAddress_To_ERC721TokenId_To_ERC20ContractAddress[
             _ERC721ContractAddress
         ][_ERC721TokenId] = _ERC20ContractAddress;
         ERC721ContractAddress_To_ERC721TokenId_To_ERC20ContractAddress_To_Pair[
             _ERC721ContractAddress
         ][_ERC721TokenId][_ERC20ContractAddress] = pair;
-        /*                 STATE VARIABLES                  */
+        /*                 STRUCT CHANGES                   */
         PairAddress_To_PairInfo[pair] = Pair({
             ERC721ContractAddress: _ERC721ContractAddress,
             ERC20ContractAddress: _ERC20ContractAddress,
@@ -125,7 +127,7 @@ contract NTPair is INTPair, IERC721Receiver {
             ERC721TokenId: _ERC721TokenId,
             ERC20SettedTokenValue: _ERC20TokenValue
         });
-        /*                 STATE VARIABLES                  */
+        /*                      EVENT                       */
         emit PairCreated(
             _ERC721ContractAddress,
             _ERC721TokenId,
@@ -133,7 +135,7 @@ contract NTPair is INTPair, IERC721Receiver {
             _ERC20TokenValue,
             pair
         );
-        /*                 STATE VARIABLES                  */
+        /*                 ERC721 TRANSFER                  */
         ERC721TokenTransfer(
             address(this),
             _ERC721ContractAddress,
@@ -141,8 +143,7 @@ contract NTPair is INTPair, IERC721Receiver {
         );
     }
 
-    /// @notice
-    /// @dev
+    /// @notice Swap erc721 token for erc20 token.
     function swap(
         address _ERC721ContractAddress,
         uint256 _ERC721TokenId
@@ -166,13 +167,13 @@ contract NTPair is INTPair, IERC721Receiver {
                     msg.sender,
                     address(this)
                 ),
-            "Contract hasnt been allowed to make this transfer on erc20 owner behalf"
+            "Contract hasnt been allowed to make this erc20 transfer"
         );
         /*         STATE CHANGING BEFORE TRANSFER           */
         ERC721ContractAddress_To_ERC721TokenId_To_ERC20ContractAddress_To_Pair[
             _ERC721ContractAddress
         ][_ERC721TokenId][_ERC20ContractAddress] = address(0);
-        /*                    EXCHANGE                      */
+        /*                     EVENT                        */
         emit Swapped(
             _ERC721ContractAddress,
             _ERC20ContractAddress,
@@ -181,14 +182,14 @@ contract NTPair is INTPair, IERC721Receiver {
             _ERC721TokenId,
             pairInfo.ERC20SettedTokenValue
         );
-        /*                 STATE VARIABLES                  */
+        /*                 ERC20 TRANSFER                   */
         ERC20TokenTransfer(
             msg.sender,
             pairInfo.ERC721TokenOwner,
             pairInfo.ERC20ContractAddress,
             pairInfo.ERC20SettedTokenValue
         );
-        /*                 STATE VARIABLES                  */
+        /*                 ERC721 TRANSFER                 */
         ERC721TokenTransfer(
             msg.sender,
             _ERC721ContractAddress,
