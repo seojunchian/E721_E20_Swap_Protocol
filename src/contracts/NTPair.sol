@@ -1,18 +1,23 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.20;
+pragma solidity ^0.8.0;
 
 import "./interfaces/IERC20.sol";
 import "./interfaces/IERC721.sol";
 import "./interfaces/INTPair.sol";
 import "./interfaces/IERC721Receiver.sol";
 
+/// @title ERC721-ERC20 Exchange Protocol
+/// @author seojunchian
+/// @notice Contract lets ERC721 owners to exchange their tokens for any ERC20 token.
 contract NTPair is INTPair, IERC721Receiver {
-    // before deployment change double quoto to one quoto
+    // erc20 transfer function
     bytes4 public immutable ERC20Transfer =
         bytes4(keccak256(bytes("transferFrom(address,address,uint256)")));
+    // erc721 transfer function
     bytes4 public immutable ERC721SafeTransferFrom =
         bytes4(keccak256(bytes("safeTransferFrom(address,address,uint256)")));
 
+    // names are pretty obvious
     struct Pair {
         address ERC721ContractAddress;
         address ERC20ContractAddress;
@@ -21,12 +26,16 @@ contract NTPair is INTPair, IERC721Receiver {
         uint256 ERC20SettedTokenValue;
     }
 
+    // need erc20 contract address to be stored so I wouldnt ask from erc20 owner when doing swap
     mapping(address ERC721ContractAddress => mapping(uint256 ERC721TokenId => address ERC20ContractAddress))
         public ERC721ContractAddress_To_ERC721TokenId_To_ERC20ContractAddress;
+    // pair address
     mapping(address ERC721ContractAddress => mapping(uint256 ERC721TokenId => mapping(address ERC20ContractAddress => address pair)))
         public ERC721ContractAddress_To_ERC721TokenId_To_ERC20ContractAddress_To_Pair;
+    // pair info
     mapping(address pair => Pair) public PairAddress_To_PairInfo;
 
+    /// @notice Lets this contract able to receive ERC721 tokens.
     function onERC721Received(
         address operator,
         address from,
@@ -37,17 +46,22 @@ contract NTPair is INTPair, IERC721Receiver {
         return this.onERC721Received.selector;
     }
 
+    /// @notice If you created a pair and given up from that idea, it lets you receive your token back.
+    /// @dev Function doesnt check if contract owner of the token or not cause you cant create pair and retrieve erc721 token without it.
     function retrieveERC721Token(
         address _ERC721ContractAddress,
         uint256 _ERC721TokenId
     ) public {
+        /*                 STATE VARIABLES                  */
         address _ERC20ContractAddress = ERC721ContractAddress_To_ERC721TokenId_To_ERC20ContractAddress[
                 _ERC721ContractAddress
             ][_ERC721TokenId];
         address pairAddress = ERC721ContractAddress_To_ERC721TokenId_To_ERC20ContractAddress_To_Pair[
                 _ERC721ContractAddress
             ][_ERC721TokenId][_ERC20ContractAddress];
+        /*                 STATE VARIABLES                  */
         Pair memory pairInfo = PairAddress_To_PairInfo[pairAddress];
+        /*                 STATE VARIABLES                  */
         require(
             pairInfo.ERC721TokenOwner == msg.sender,
             "Not the owner of ERC721 Token"
@@ -70,37 +84,40 @@ contract NTPair is INTPair, IERC721Receiver {
         );
     }
 
+    /// @notice Lets you able to create pair and set erc20 token price to exchange your erc721 token.
+    /// @dev could create deterministic address with create2 and give bytecode 0x00...
     function createPair(
         address _ERC721ContractAddress,
         address _ERC20ContractAddress,
         uint256 _ERC721TokenId,
         uint256 _ERC20TokenValue
     ) public {
+        /*                 STATE VARIABLES                  */
         require(
             ERC721ContractAddress_To_ERC721TokenId_To_ERC20ContractAddress_To_Pair[
                 _ERC721ContractAddress
             ][_ERC721TokenId][_ERC20ContractAddress] == address(0),
             "Pair already exists"
         );
+        /*                 STATE VARIABLES                  */
         require(
-            IERC721(_ERC721ContractAddress).ownerOf(_ERC721TokenId) ==
+            IERC721(_ERC721ContractAddress).getApproved(_ERC721TokenId) ==
                 address(this),
-            "Token hasn't been sent to this contract"
+            "Token hasn't been approved"
         );
-        // requirement for sended erc721token is in fact a erc721 contract address
-        /* require(supportsInterface(type(IERC721).interfaceId)); */
-        // pair creation
+        /*                 STATE VARIABLES                  */
         bytes32 salt = keccak256(
             abi.encodePacked(_ERC721ContractAddress, _ERC721TokenId)
         );
         address pair = address(uint160(uint256(salt)));
-        // on-contract data
+        /*                 STATE VARIABLES                  */
         ERC721ContractAddress_To_ERC721TokenId_To_ERC20ContractAddress[
             _ERC721ContractAddress
         ][_ERC721TokenId] = _ERC20ContractAddress;
         ERC721ContractAddress_To_ERC721TokenId_To_ERC20ContractAddress_To_Pair[
             _ERC721ContractAddress
         ][_ERC721TokenId][_ERC20ContractAddress] = pair;
+        /*                 STATE VARIABLES                  */
         PairAddress_To_PairInfo[pair] = Pair({
             ERC721ContractAddress: _ERC721ContractAddress,
             ERC20ContractAddress: _ERC20ContractAddress,
@@ -108,6 +125,7 @@ contract NTPair is INTPair, IERC721Receiver {
             ERC721TokenId: _ERC721TokenId,
             ERC20SettedTokenValue: _ERC20TokenValue
         });
+        /*                 STATE VARIABLES                  */
         emit PairCreated(
             _ERC721ContractAddress,
             _ERC721TokenId,
@@ -115,8 +133,16 @@ contract NTPair is INTPair, IERC721Receiver {
             _ERC20TokenValue,
             pair
         );
+        /*                 STATE VARIABLES                  */
+        ERC721TokenTransfer(
+            address(this),
+            _ERC721ContractAddress,
+            _ERC721TokenId
+        );
     }
 
+    /// @notice
+    /// @dev
     function swap(
         address _ERC721ContractAddress,
         uint256 _ERC721TokenId
@@ -155,12 +181,14 @@ contract NTPair is INTPair, IERC721Receiver {
             _ERC721TokenId,
             pairInfo.ERC20SettedTokenValue
         );
+        /*                 STATE VARIABLES                  */
         ERC20TokenTransfer(
             msg.sender,
             pairInfo.ERC721TokenOwner,
             pairInfo.ERC20ContractAddress,
             pairInfo.ERC20SettedTokenValue
         );
+        /*                 STATE VARIABLES                  */
         ERC721TokenTransfer(
             msg.sender,
             _ERC721ContractAddress,
@@ -204,6 +232,8 @@ contract NTPair is INTPair, IERC721Receiver {
         );
     }
 
+    /// @notice Lets you change erc20 price of your erc721 token
+    /// @dev this function will be gone in version2
     function changeERC20TokenPrice(
         address _ERC721ContractAddress,
         uint256 _ERC721TokenId,
@@ -228,6 +258,7 @@ contract NTPair is INTPair, IERC721Receiver {
         /*                 STATE CHANGING                   */
         PairAddress_To_PairInfo[pair]
             .ERC20SettedTokenValue = _newERC20TokenPrice;
+        /*                     EVENT                        */
         emit ERC20TokenPriceChanged(
             _ERC721ContractAddress,
             _ERC20ContractAddress,
@@ -237,16 +268,7 @@ contract NTPair is INTPair, IERC721Receiver {
         );
     }
 
-    function returnERC20Token(
-        address _ERC721ContractAddress,
-        uint256 _ERC721TokenId
-    ) public view returns (address) {
-        return
-            ERC721ContractAddress_To_ERC721TokenId_To_ERC20ContractAddress[
-                _ERC721ContractAddress
-            ][_ERC721TokenId];
-    }
-
+    /// @notice Lets you return pair address.
     function returnPairAddress(
         address _ERC721ContractAddress,
         address _ERC20ContractAddress,
@@ -256,5 +278,19 @@ contract NTPair is INTPair, IERC721Receiver {
             ERC721ContractAddress_To_ERC721TokenId_To_ERC20ContractAddress_To_Pair[
                 _ERC721ContractAddress
             ][_ERC721TokenId][_ERC20ContractAddress];
+    }
+
+    /// @notice Lets you return pair info.
+    function returnPairInfo(
+        address _ERC721ContractAddress,
+        uint256 _ERC721TokenId
+    ) public view returns (Pair memory) {
+        address _ERC20ContractAddress = ERC721ContractAddress_To_ERC721TokenId_To_ERC20ContractAddress[
+                _ERC721ContractAddress
+            ][_ERC721TokenId];
+        address pairAddress = ERC721ContractAddress_To_ERC721TokenId_To_ERC20ContractAddress_To_Pair[
+                _ERC721ContractAddress
+            ][_ERC721TokenId][_ERC20ContractAddress];
+        return PairAddress_To_PairInfo[pairAddress];
     }
 }
